@@ -54,3 +54,23 @@ python train.py --data kitti.yaml --epochs 5 --batch-size 5 --weights yolov5s.pt
 # Save model weights
 cp yolov5/runs/exp{latest-exp-number}/best.pt ../models/new_model.pt
 ```
+
+### Evaluating the model
+
+```
+```
+
+### Testing the model
+
+```
+```
+
+### Augmenting Images
+
+```
+```
+
+### Separating into Training/Testing Datasets
+
+```
+```
