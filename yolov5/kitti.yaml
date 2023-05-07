@@ -1,7 +1,7 @@
 path: kitti  # dataset root dir
 train: images
 val: images
-test:  # images/test
+test:  # test_images
 
 # Classes (8 KITTI classes)
 names:

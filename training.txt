@@ -1,0 +1,7 @@
+# First type this command to be in the yolov5 directory
+cd yolov5
+# Then run this command, changing epochs and batch-size as desired
+python train.py --data kitti.yaml --epochs 5 --batch-size 5 --weights yolov5s.pt --cache disk
+# This command, will prompt for image types twice (once for training and second for validation)
+cp yolov5/runs/exp{latest-exp-number}/best.pt models/{your-name}.pt
+# Go into yolov5 and extract from runs the best.pt and save it to the models folder with a name that represents what the model is

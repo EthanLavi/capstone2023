@@ -192,16 +192,17 @@ def run(
             if save_img:
                 if dataset.mode == 'image':
                     prefix = p.name.split(".")[0]
-                    f = open(f"kitti/labels/{prefix}.txt", "r")
-                    for line in f:
-                        if line.strip() == "":
-                            continue
-                        if (line.split()[0] in ["7", "8"]):
-                            continue
-                        x,y,w,h = [float(line.split()[i]) for i in range(1,5)]
-                        x,y = int(x*im0.shape[1]), int(y*im0.shape[0])
-                        w,h = int(w*im0.shape[1]/2), int(h*im0.shape[0]/2)
-                        im0 = cv2.rectangle(im0, (x-w,y-h), (x+w, y+h), (0, 255, 0), 3)
+                    if os.path.exists("kitti/labels/{prefix}.txt"): 
+                        f = open(f"kitti/labels/{prefix}.txt", "r")
+                        for line in f:
+                            if line.strip() == "":
+                                continue
+                            if (line.split()[0] in ["7", "8"]):
+                                continue
+                            x,y,w,h = [float(line.split()[i]) for i in range(1,5)]
+                            x,y = int(x*im0.shape[1]), int(y*im0.shape[0])
+                            w,h = int(w*im0.shape[1]/2), int(h*im0.shape[0]/2)
+                            im0 = cv2.rectangle(im0, (x-w,y-h), (x+w, y+h), (0, 255, 0), 3)
                     cv2.imwrite(save_path, im0)
                 else:  # 'video' or 'stream'
                     if vid_path[i] != save_path:  # new video
