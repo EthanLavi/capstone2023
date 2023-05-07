@@ -1,6 +1,7 @@
 # Skillion Capstone 2023
 
 ## Directory Structure
+```
 ├── eval
 ├── labeling
 │   ├── kitti
@@ -40,6 +41,7 @@
             └── train
                 └── exp5
                     └── weights
+```
 
 ## Example Commands
 
