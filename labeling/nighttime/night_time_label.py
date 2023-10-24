@@ -18,6 +18,8 @@ for img_num, img_label in enumerate(data_it):
     img_name = f"img_{img_num}.jpg"
 
     tokens = img_label.split()
+    if len(tokens) == 0:
+        continue
     assert(int(tokens[0]) == img_num)
     lines = ""
     if not os.path.isfile(os.path.join(folder_with_imgs, img_name)):
