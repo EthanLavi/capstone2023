@@ -20,6 +20,8 @@ for img_num, img_label in enumerate(data_it):
     tokens = img_label.split()
     assert(int(tokens[0]) == img_num)
     lines = ""
+    if not os.path.isfile(os.path.join(folder_with_imgs, img_name)):
+        continue
     img_content = cv.imread(os.path.join(folder_with_imgs, img_name))
     h, w, c = img_content.shape
     for img_i in range(int(tokens[1])):
@@ -32,3 +34,4 @@ for img_num, img_label in enumerate(data_it):
     f = open(os.path.join(folder_for_labels, label_name), "w")
     f.write(lines)
     f.close()
+print("Done!")
