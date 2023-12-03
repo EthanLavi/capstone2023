@@ -2,8 +2,16 @@
 import cv2
 import sys
 import matplotlib.pyplot as plt
+import os
+
+os.makedirs("graphs", exist_ok=True)
+
+code = int(input("1|2|3 -- 1 is daytime, 2 is nighttime, 3 is self-labeled\n"))
+description = ["Daytime", "Nighttime", "Self-Labeled"][code-1]
 
 def process_file(file):
+    if not os.path.isfile(file):
+        return []
     # Get the labels from a file
     labels = []
     f = open(file, "r")
@@ -11,7 +19,7 @@ def process_file(file):
         tokens = line.split()
         if (len(tokens) == 0):
             continue
-        if (tokens[0] in ["7", "8"]):
+        if (tokens[0] in ["7", "8"]): # ignore useless classes
             continue
         x, y, w, h = [float(tokens[i]) for i in range(1,5)]
         w,h = w/2, h/2
@@ -41,34 +49,71 @@ def bb_intersection_over_union(boxA, boxB):
 	iou = interArea / float(boxAArea + boxBArea - interArea)
 
 	# return the intersection over union value
-	return iou
+	return iou, boxAArea, boxBArea
 
 if len(sys.argv) < 3:
-    print("Must provide two arguments to represent the directories/files to process")
+    print("Must provide two arguments to represent the folders containing the labels (1st) and the predictions (2nd) to process")
     exit(1)
-labels = process_file(sys.argv[1])
-predictions = process_file(sys.argv[2])
+labels_dir = sys.argv[1].strip()
+predictions_dir = sys.argv[2].strip()
+if labels_dir == "":
+    print("labels directory wasn't provided")
+if predictions_dir == "":
+    print("predictions directory wasn't provided")
     
 # loop over the detections
 buckets = [0] * 10
 count = 0
 avg = 0
-for box in labels:
-    maxxer = 0
-    mindex = None
-    for pred in predictions:
-        iou = bb_intersection_over_union(box, pred)
-        if maxxer < iou:
-            maxxer = iou
-            mindex = pred
-    if mindex is None:
-        break
-    count += 1
-    avg += maxxer
-    i = int(maxxer * 10)
-    buckets[i] += 1
-    predictions.remove(mindex)
+label_count = 0
+total_box_size = 0
+missed_box_size = 0
+for file in os.listdir(labels_dir):
+    if code == 2 and "img_" not in file:
+        continue # filter nighttime
+    elif code == 3 and "ethan" not in file:
+        continue # filter self-labeled
+    elif code == 1 and ("img_" in file or "ethan" in file):
+        continue # filter daytime
+    labels = process_file(os.path.join(labels_dir, file))
+    label_count += len(labels)
+    predictions = process_file(os.path.join(predictions_dir, file))
+    for box in labels:
+        maxxer = 0
+        mindex = None
+        max_area_box = 0
+        for pred in predictions:
+            iou, area_box, area_pred = bb_intersection_over_union(box, pred)
+            if maxxer < iou:
+                maxxer = iou
+                mindex = pred
+                max_area_box = area_box
+        if maxxer < 0.5:
+            missed_box_size += max_area_box
+        total_box_size += max_area_box
+        if mindex is None:
+            break
+        count += 1
+        avg += maxxer
+        i = int(maxxer * 10)
+        if i >= 10:
+            i = 9
+        buckets[i] += 1
+        predictions.remove(mindex)
 
 print(buckets)
+print("Missed boxes have size:", missed_box_size, "\tBoxes have an average size:", total_box_size)
 print("Average IOU:", avg / count)
-print("Missed", len(labels) - count, "out of", len(labels))
+print("Missed", label_count - count, "out of", label_count)
+buckets[0] += label_count - count # add the missing to the last bucket
+
+# creating the bar plot
+plt.bar([f"{10*i}-{10*(i+1)}" for i in range(10)], buckets)
+
+model = input("What is the model used in your analysis\n")
+for i in range(len(buckets)):
+    plt.text(i, buckets[i], buckets[i], ha = 'center')
+plt.xlabel("IOU Buckets")
+plt.ylabel("Number of examples in the bucket")
+plt.title(f"IOU of predictions ({model}) on {description} test set")
+plt.savefig(os.path.join("graphs", f"{model}_{description}_iou.png"))

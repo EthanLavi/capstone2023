@@ -16,24 +16,14 @@ NOISE_FACTOR = 20
 OUTPUT_DIR = "augmented_images"
 LABEL_OUTPUT_DIR = "augmented_labels"
 
-def is_in_category(image_name, use_night):
-    if use_night:
-        return "img_" in image_name
+def is_in_category(image_name, use_day):
+    if use_day:
+        return "img_" not in image_name and "ethan" not in image_name
     else:
-        return "img_" not in image_name
+        return "img_" in image_name or "ethan" in image_name
         
 
-def augment_images(image_dir, label_dir, n, use_night):
-    """
-    Augments n images in the input directory by adjusting their brightness and adding noise.
-
-    Args:
-        image_dir (str): Path to the directory containing the input images.
-        label_dir (str): Path to the directory containing the labels.
-        n (int): How many images to do. If <0 will do all
-        use_night (bool): If the use the night time images for augmentation or not
-    """
-
+def augment_images(image_dir, label_dir, n, use_day):
     # Create the output directory
     output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), OUTPUT_DIR)
     label_output_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), LABEL_OUTPUT_DIR)
@@ -49,7 +39,7 @@ def augment_images(image_dir, label_dir, n, use_night):
         print("directory exists at " + label_output_dir)
 
     # Get a list of all the image file names in the input directory
-    image_file_names = [f for f in os.listdir(image_dir) if (f.endswith(".jpg") or f.endswith(".png")) and is_in_category(f, use_night)]
+    image_file_names = [f for f in os.listdir(image_dir) if (f.endswith(".jpg") or f.endswith(".png")) and is_in_category(f, use_day)]
     label_file_names = [f for f in os.listdir(label_dir) if f.endswith(".txt")]
         
     # Augment all images
@@ -64,7 +54,7 @@ def augment_images(image_dir, label_dir, n, use_night):
         image = cv2.imread(image_path)
 
         # Adjust the brightness
-        index = 1 if use_night else 0
+        index = 0 if use_day else 1
         image = cv2.convertScaleAbs(image, 1, BRIGHTNESS_ADJUSTMENT[index])
 
         # Add noise
@@ -79,6 +69,7 @@ def augment_images(image_dir, label_dir, n, use_night):
         for label in label_file_names:
             if label.split(".")[0] == image_file_name.split(".")[0]:
                 label_file_name = label
+
         
         # Make sure we have the label_file_name
         if label_file_name is None:
@@ -93,14 +84,22 @@ def augment_images(image_dir, label_dir, n, use_night):
     print("-- FINISHED AUGMENTATION --")
 
 if __name__ == "__main__":
+    if len(sys.argv) != 5:
+        print("""Augments n images in the input directory by adjusting their brightness and adding noise.
+Args:
+    image_dir (str): Path to the directory containing the input images.
+    label_dir (str): Path to the directory containing the labels.
+    n (int): How many images to do. If <0 will do all
+    use_day (bool): If to augment the night time images or the day time ones (judged via img_ prefix)""")
+        exit(0)
     # Get the input directory path from the command line argument
     image_dir = sys.argv[1]
     label_dir = sys.argv[2]
     n = int(sys.argv[3])
-    use_night = sys.argv[4]
-    if use_night not in ["y", "n"]:
-        print("Use_night argument must be y or n")
+    use_day = sys.argv[4]
+    if use_day not in ["y", "n"]:
+        print("use_day argument must be y or n")
         exit(1)
     
     # Augment 10 images in the input directory
-    augment_images(image_dir, label_dir, n, use_night == "y")
+    augment_images(image_dir, label_dir, n, use_day == "y")
